@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.136
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{E7CD322E-B114-44F0-9FFE-F368C5B2C995}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{9D1E21CF-7071-4187-88FB-BB5BF82C2006}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cryptopals", "src\Cryptopals\Cryptopals.csproj", "{6A06B648-DFC5-4971-AA86-45242BC111C7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cryptopals.Test", "test\Cryptopals.Test\Cryptopals.Test.csproj", "{53048DB6-56BF-478E-98B3-0CDF23911CE3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6A06B648-DFC5-4971-AA86-45242BC111C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A06B648-DFC5-4971-AA86-45242BC111C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A06B648-DFC5-4971-AA86-45242BC111C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A06B648-DFC5-4971-AA86-45242BC111C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53048DB6-56BF-478E-98B3-0CDF23911CE3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53048DB6-56BF-478E-98B3-0CDF23911CE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53048DB6-56BF-478E-98B3-0CDF23911CE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53048DB6-56BF-478E-98B3-0CDF23911CE3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{6A06B648-DFC5-4971-AA86-45242BC111C7} = {E7CD322E-B114-44F0-9FFE-F368C5B2C995}
+		{53048DB6-56BF-478E-98B3-0CDF23911CE3} = {9D1E21CF-7071-4187-88FB-BB5BF82C2006}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {789464E5-C809-4302-9F30-3AF295CAC8C9}
+	EndGlobalSection
+EndGlobal
