@@ -29,28 +29,16 @@ namespace Cryptopals
             var binary = bytes.ToBinaryString();
 
             // to sextets
-            var sextets = OctetsToSextet(binary);
+            var sextets = OctetsToSextets(binary);
 
             // to base64
-            string base64String = null;
-
-            foreach (var sextet in sextets)
-            {
-                base64String += Base64Lookup[sextet];
-            }
-
-            // padding (result must be divisible by three)
-            if (bytes.Length % 3 != 0)
-            {
-                if (bytes.Length % 3 == 1) base64String += "=="; // if only 1 remainder, then pad to 3
-                if (bytes.Length % 3 == 2) base64String += "="; // if only 2 remainder, then pad to 2
-            }
+            var base64String = SextetsToBase64String(sextets);
 
             return base64String;
         }
 
         // take every six bits and parse
-        private static List<int> OctetsToSextet(string bits)
+        private static IList<int> OctetsToSextets(string bits)
         {
             var taken = 0;
             var sextets = new List<int>();
@@ -69,6 +57,25 @@ namespace Cryptopals
             }
 
             return sextets;
+        }
+
+        private static string SextetsToBase64String(IList<int> sextets)
+        {
+            string base64String = null;
+
+            foreach (var sextet in sextets)
+            {
+                base64String += Base64Lookup[sextet];
+            }
+
+            // padding (result must be divisible by four)
+            if (base64String?.Length % 4 != 0)
+            {
+                if (base64String?.Length % 4 == 1) base64String += "==";
+                else base64String += "=";
+            }
+
+            return base64String;
         }
         
         // allowedCharacters: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
