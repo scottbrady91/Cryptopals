@@ -18,14 +18,13 @@ namespace Cryptopals
                 if (LetterScore.TryGetValue(c.Key, out var freq))
                 {
                     coefficient += Math.Sqrt(freq * c.Count / text.Length);
-
                 }
             }
 
             return coefficient;
         }
 
-        // http://pi.math.cornell.edu/~mec/2003-2004/cryptography/subs/frequencies.html
+        // http://pi.math.cornell.edu/~mec/2003-2004/cryptography/subs/frequencies.html (including space character)
         private static readonly Dictionary<char, double> LetterScore = new Dictionary<char, double>
         {
             {'E', 12.02},
@@ -53,7 +52,8 @@ namespace Cryptopals
             {'X', 0.17},
             {'Q', 0.11},
             {'J', 0.10},
-            {'Z', 0.07}
+            {'Z', 0.07},
+            {' ', 0.19}
         };
     }
 }
