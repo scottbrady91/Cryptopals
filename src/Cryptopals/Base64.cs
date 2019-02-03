@@ -37,6 +37,41 @@ namespace Cryptopals
             return base64String;
         }
 
+        public static string Decode(string value)
+        {
+            return Encoding.ASCII.GetString(DecodeBytes(value));
+        }
+
+        public static byte[] DecodeBytes(string value)
+        {
+            var bits = string.Empty;
+
+            // get bits (value to sextet to bits)
+            foreach (var b in value.TrimEnd('='))
+            {
+                var indexOf = Array.IndexOf(Base64Lookup, b);
+                bits += Convert.ToString(indexOf, 2).PadLeft(6, '0');
+            }
+
+            // bits to bytes
+            var taken = 0;
+            var octets = new List<byte>();
+
+            while (taken < bits.Length)
+            {
+                var octet = bits.Skip(taken).Take(8).Aggregate(string.Empty, (c, c1) => c + c1);
+
+                if (octet.Length == 8)
+                {
+                    octets.Add(Convert.ToByte(octet, 2));
+                }
+
+                taken += 8;
+            }
+
+            return octets.ToArray();
+        }
+
         // take every six bits and parse
         private static IList<int> OctetsToSextets(string bits)
         {
@@ -71,7 +106,7 @@ namespace Cryptopals
             // padding (result must be divisible by four)
             if (base64String?.Length % 4 != 0)
             {
-                if (base64String?.Length % 4 == 1) base64String += "==";
+                if (base64String?.Length % 4 == 2) base64String += "==";
                 else base64String += "=";
             }
 

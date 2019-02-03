@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections;
+﻿using System.Linq;
+using System.Text;
 using FluentAssertions;
 using Xunit;
 
@@ -16,7 +16,40 @@ namespace Cryptopals.Test.Functionality
             bytes.ToBinaryString().Should().Be(expected);
         }
 
+        [Fact]
+        public void GetHammingDistance_UsingCryptopalsExample()
+        {
+            var x = Encoding.ASCII.GetBytes("this is a test");
+            var y = Encoding.ASCII.GetBytes("wokka wokka!!!");
 
+            x.GetHammingDistance(y).Should().Be(37);
+        }
+
+        [Fact]
+        public void Chunk_WhenArrayDivisibleByKeySize_ExpectCorrectBlocks()
+        {
+            var first = new byte[] {01, 02, 03};
+            var second = new byte[] {04, 05, 06};
+            var all = first.Concat(second);
+
+            var blocks = all.Chunk(3);
+
+            blocks[0].Should().BeEquivalentTo(first);
+            blocks[1].Should().BeEquivalentTo(second);
+        }
+
+        [Fact]
+        public void Chunk_WhenArrayNotDivisibleByKeySize_ExpectCorrectBlocks()
+        {
+            var first = new byte[] {01, 02, 03};
+            var second = new byte[] {04};
+            var all = first.Concat(second);
+
+            var blocks = all.Chunk(3);
+
+            blocks[0].Should().BeEquivalentTo(first);
+            blocks[1].Should().BeEquivalentTo(second);
+        }
 
         [Fact]
         public void ToBlock()

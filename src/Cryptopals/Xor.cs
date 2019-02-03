@@ -37,7 +37,7 @@ namespace Cryptopals
         public static Dictionary<string, string> BruteForceSingleByte(string cipherText)
         {
             var outputs = new Dictionary<string, string>();
-            foreach (var key in Enumerable.Range(0, 256))
+            foreach (var key in Enumerable.Range(0, 127))
             {
                 var keyAsHex = Convert.ToString(key, 16);
                 var expandedKey = ExpandKey(cipherText, keyAsHex);

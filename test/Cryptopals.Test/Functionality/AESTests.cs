@@ -60,7 +60,7 @@ namespace Cryptopals.Test.Functionality
         public void Decrypt_ChallengeTextUsingSystemCryptography()
         {
             const string key = "YELLOW SUBMARINE";
-            var challengeText = File.ReadAllText("7.txt");
+            var challengeText = File.ReadAllText("TestData/Set1/7.txt");
 
             var challengePlainText = SystemCryptographyDecrypt(challengeText, key);
 

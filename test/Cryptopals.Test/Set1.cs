@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -9,7 +10,7 @@ namespace Cryptopals.Test
     public class Set1
     {
         [Fact]
-        public void Challenge1()
+        public void Challenge1() // base64
         {
             const string hex = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
             const string expected = "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t";
@@ -18,7 +19,7 @@ namespace Cryptopals.Test
         }
 
         [Fact]
-        public void Challenge2()
+        public void Challenge2() // XOR
         {
             const string hex1 = "1c0111001f010100061a024b53535009181c";
             const string hex2 = "686974207468652062756c6c277320657965";
@@ -28,9 +29,8 @@ namespace Cryptopals.Test
         }
 
         [Fact]
-        public void Challenge3()
+        public void Challenge3() // single-byte XOR brute force
         {
-            // XOR cipher (single-byte key)
             const string cipherText = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
 
             // brute force each byte
@@ -55,9 +55,9 @@ namespace Cryptopals.Test
         }
 
         [Fact]
-        public void Challenge4()
+        public void Challenge4() // find single-byte XOR ciphertext & brute force
         {
-            var cipherTexts = File.ReadAllLines("4.txt");
+            var cipherTexts = File.ReadAllLines("TestData/Set1/4.txt");
             
             string xoredCipherText = null;
             string plainTextValue = null;
@@ -79,10 +79,8 @@ namespace Cryptopals.Test
                 }
             }
 
-            var x = Xor.BruteForceSingleByte("7b5a4215415d544115415d5015455447414c155c46155f4058455c5b523f");
-
             xoredCipherText.Should().Be("7b5a4215415d544115415d5015455447414c155c46155f4058455c5b523f");
-            plainTextValue.Should().Be("Now that the party is jumping\n"); // TODO: casing??
+            plainTextValue.Should().Be("Now that the party is jumping\n");
         }
 
         [Fact]
@@ -108,7 +106,94 @@ namespace Cryptopals.Test
         [Fact]
         public void Challenge6() // Break repeating-key XOR
         {
+            var encodedCipherText = File.ReadAllLines("TestData/Set1/6.txt")
+                .Aggregate(string.Empty, (s, s1) => s + s1);
 
+            var cipherText = Base64.DecodeBytes(encodedCipherText);
+
+            var keySizeResults = new Dictionary<int, int>();
+
+            // 1. "Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40."
+            for (var i = 2; i <= 40; i++)
+            {
+                // 2. For hamming distance tests see Funcationlity\StringExtensionTests.cs
+                // 3. "For each KEYSIZE, take the first KEYSIZE worth of bytes, and the second KEYSIZE worth of bytes, and find the edit distance between them.
+                // Normalize this result by dividing by KEYSIZE."
+                var firstKeySizeBytes = cipherText.Take(i);
+                var secondKeySizeBytes = cipherText.Skip(i).Take(i);
+
+                var hammingDistance = firstKeySizeBytes.GetHammingDistance(secondKeySizeBytes);
+                var normalizedDistance = hammingDistance / i;
+
+                keySizeResults.Add(i, normalizedDistance);
+            }
+
+            // 4. "The KEYSIZE with the smallest normalized edit distance is probably the key.
+            // You could proceed perhaps with the smallest 2-3 KEYSIZE values.
+            // Or take 4 KEYSIZE blocks instead of 2 and average the distances."
+            var orderedResults = keySizeResults.OrderBy(x => x.Value);
+
+            foreach ((int keySize, int _) in orderedResults)
+            {
+                // 5. "Now that you probably know the KEYSIZE: break the ciphertext into blocks of KEYSIZE length."
+                var blocksOfKeySize = cipherText.Chunk(keySize).ToList();
+
+                // 6. "Now transpose the blocks: make a block that is the first byte of every block,
+                // and a block that is the second byte of every block, and so on."
+                var transposedBlocks = new List<List<byte>>();
+
+                for (var i = 0; i < blocksOfKeySize.Count; i++) // there must be a simpler way but I'm failing to see it...
+                {
+                    foreach (var block in blocksOfKeySize.ToList())
+                    {
+                        if (i < block.Count)
+                        {
+                            if (transposedBlocks.ElementAtOrDefault(i) == null)
+                                transposedBlocks.Add(new List<byte>());
+
+                            transposedBlocks[i].Add(block[i]);
+                        }
+                    }
+                }
+                
+                // 7. "Solve each block as if it was single-character XOR. You already have code to do this."
+                var bruteForceResults = transposedBlocks
+                    .Select(x => Xor.BruteForceSingleByte(Hex.BytesToString(x.ToArray())))
+                    .ToList();
+
+                // 8. "For each block, the single-byte XOR key that produces the best looking histogram is the repeating-key
+                // XOR key byte for that block. Put them together and you have the key."
+
+                string fullKey = string.Empty;
+
+                foreach (var result in bruteForceResults)
+                {
+                    string key = null;
+                    string plaintext = null;
+                    double currentHighestScore = 0;
+
+                    foreach (var attempt in result)
+                    {
+                        var rating = LetterAnalyzer.EnglishRating(attempt.Value);
+                        if (currentHighestScore < rating)
+                        {
+                            key = attempt.Key;
+                            plaintext = attempt.Value;
+                            currentHighestScore = rating;
+                        }
+                    }
+
+                    fullKey += key;
+                }
+
+                var expandedKey = Xor.ExpandKey(Hex.BytesToString(cipherText), fullKey);
+                var bytes = Xor.ByteArrays(cipherText, Hex.StringToBytes(expandedKey));
+                var s = Encoding.ASCII.GetString(bytes);
+            }
+
+
+
+            Assert.False(true); // TODO
         }
 
         [Fact]
