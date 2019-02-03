@@ -1,8 +1,8 @@
+using FluentAssertions;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using FluentAssertions;
 using Xunit;
 
 namespace Cryptopals.Test
@@ -58,7 +58,7 @@ namespace Cryptopals.Test
         public void Challenge4() // find single-byte XOR ciphertext & brute force
         {
             var cipherTexts = File.ReadAllLines("TestData/Set1/4.txt");
-            
+
             string xoredCipherText = null;
             string plainTextValue = null;
             double currentHighestScore = 0;
@@ -66,7 +66,7 @@ namespace Cryptopals.Test
             foreach (var cipherText in cipherTexts.ToList())
             {
                 var plaintextValues = Xor.BruteForceSingleByte(cipherText);
-                
+
                 foreach (var attempt in plaintextValues)
                 {
                     var rating = LetterAnalyzer.EnglishRating(attempt.Value);
@@ -119,12 +119,20 @@ namespace Cryptopals.Test
                 // 2. For hamming distance tests see Funcationlity\StringExtensionTests.cs
                 // 3. "For each KEYSIZE, take the first KEYSIZE worth of bytes, and the second KEYSIZE worth of bytes, and find the edit distance between them.
                 // Normalize this result by dividing by KEYSIZE."
-                var firstKeySizeBytes = cipherText.Take(keySize);
-                var secondKeySizeBytes = cipherText.Skip(keySize).Take(keySize);
 
-                var hammingDistance = firstKeySizeBytes.GetHammingDistance(secondKeySizeBytes);
-                var normalizedDistance = hammingDistance / keySize; // currently just using the first couple of blocks, maybe check the rest for a better average?
+                var hammingDistance = 0;
+                var numberOfHams = 0;
 
+                for (int i = 1; i < cipherText.Length / keySize; i++)
+                {
+                    var firstKeySizeBytes = cipherText.Skip(keySize * (i - 1)).Take(keySize);
+                    var secondKeySizeBytes = cipherText.Skip(keySize * i).Take(keySize);
+
+                    hammingDistance += firstKeySizeBytes.GetHammingDistance(secondKeySizeBytes);
+                    numberOfHams++;
+                }
+
+                var normalizedDistance = hammingDistance / numberOfHams / keySize;
                 keySizeResults.Add(keySize, normalizedDistance);
             }
 
@@ -132,56 +140,51 @@ namespace Cryptopals.Test
             // You could proceed perhaps with the smallest 2-3 KEYSIZE values.
             // Or take 4 KEYSIZE blocks instead of 2 and average the distances."
             var orderedResults = keySizeResults.OrderBy(x => x.Value);
+            var bestKeySize = orderedResults.First().Key;
 
-            foreach ((int keySize, int _) in orderedResults)
+            // 5. "Now that you probably know the KEYSIZE: break the ciphertext into blocks of KEYSIZE length."
+            var blocksOfKeySize = cipherText.CreateMatrix(bestKeySize);
+
+            // 6. "Now transpose the blocks: make a block that is the first byte of every block,
+            // and a block that is the second byte of every block, and so on."
+            var transposedBlocks = blocksOfKeySize.Transpose();
+
+            // 7. "Solve each block as if it was single-character XOR. You already have code to do this."
+            var bruteForceResults = transposedBlocks
+                .Select(x => Xor.BruteForceSingleByte(Hex.BytesToString(x)))
+                .ToList();
+
+            // 8. "For each block, the single-byte XOR key that produces the best looking histogram is the repeating-key
+            // XOR key byte for that block. Put them together and you have the key."
+
+            var fullKey = string.Empty;
+
+            foreach (var result in bruteForceResults)
             {
-                // 5. "Now that you probably know the KEYSIZE: break the ciphertext into blocks of KEYSIZE length."
-                var blocksOfKeySize = cipherText.CreateMatrix(keySize);
+                string key = null;
+                double currentHighestScore = 0;
 
-                // 6. "Now transpose the blocks: make a block that is the first byte of every block,
-                // and a block that is the second byte of every block, and so on."
-                var transposedBlocks = blocksOfKeySize.Transpose();
-
-                // 7. "Solve each block as if it was single-character XOR. You already have code to do this."
-                var bruteForceResults = transposedBlocks
-                    .Select(x => Xor.BruteForceSingleByte(Hex.BytesToString(x)))
-                    .ToList();
-
-                // 8. "For each block, the single-byte XOR key that produces the best looking histogram is the repeating-key
-                // XOR key byte for that block. Put them together and you have the key."
-
-                string fullKey = string.Empty;
-
-                foreach (var result in bruteForceResults)
+                foreach (var attempt in result)
                 {
-                    string key = null;
-                    string plaintext = null;
-                    double currentHighestScore = 0;
-
-                    foreach (var attempt in result)
+                    var rating = LetterAnalyzer.EnglishRating(attempt.Value);
+                    if (currentHighestScore < rating)
                     {
-                        var rating = LetterAnalyzer.EnglishRating(attempt.Value);
-                        if (currentHighestScore < rating)
-                        {
-                            key = attempt.Key;
-                            plaintext = attempt.Value;
-                            currentHighestScore = rating;
-                        }
+                        key = attempt.Key;
+                        currentHighestScore = rating;
                     }
-
-                    fullKey += key;
                 }
 
-                var parsedKey = Encoding.ASCII.GetString(Hex.StringToBytes(fullKey));
-
-                var expandedKey = Xor.ExpandKey(Hex.BytesToString(cipherText), fullKey);
-                var bytes = Xor.ByteArrays(cipherText, Hex.StringToBytes(expandedKey));
-                var s = Encoding.ASCII.GetString(bytes);
+                fullKey += key;
             }
 
+            var expandedKey = Xor.ExpandKey(Hex.BytesToString(cipherText), fullKey);
+            var bytes = Xor.ByteArrays(cipherText, Hex.StringToBytes(expandedKey));
 
+            var parsedKey = Encoding.ASCII.GetString(Hex.StringToBytes(fullKey));
+            var plaintext = Encoding.ASCII.GetString(bytes);
 
-            Assert.False(true); // TODO
+            parsedKey.Should().Be("Terminator X: Bring the noise");
+            plaintext.Should().Be("I'm back and I'm ringin' the bell \nA rockin' on the mike while the fly girls yell \nIn ecstasy in the back of me \nWell that's my DJ Deshay cuttin' all them Z's \nHittin' hard and the girlies goin' crazy \nVanilla's on the mike, man I'm not lazy. \n\nI'm lettin' my drug kick in \nIt controls my mouth and I begin \nTo just let it flow, let my concepts go \nMy posse's to the side yellin', Go Vanilla Go! \n\nSmooth 'cause that's the way I will be \nAnd if you don't give a damn, then \nWhy you starin' at me \nSo get off 'cause I control the stage \nThere's no dissin' allowed \nI'm in my own phase \nThe girlies sa y they love me and that is ok \nAnd I can dance better than any kid n' play \n\nStage 2 -- Yea the one ya' wanna listen to \nIt's off my head so let the beat play through \nSo I can funk it up and make it sound good \n1-2-3 Yo -- Knock on some wood \nFor good luck, I like my rhymes atrocious \nSupercalafragilisticexpialidocious \nI'm an effect and that you can bet \nI can take a fly girl and make her wet. \n\nI'm like Samson -- Samson to Delilah \nThere's no denyin', You can try to hang \nBut you'll keep tryin' to get my style \nOver and over, practice makes perfect \nBut not if you're a loafer. \n\nYou'll get nowhere, no place, no time, no girls \nSoon -- Oh my God, homebody, you probably eat \nSpaghetti with a spoon! Come on and say it! \n\nVIP. Vanilla Ice yep, yep, I'm comin' hard like a rhino \nIntoxicating so you stagger like a wino \nSo punks stop trying and girl stop cryin' \nVanilla Ice is sellin' and you people are buyin' \n'Cause why the freaks are jockin' like Crazy Glue \nMovin' and groovin' trying to sing along \nAll through the ghetto groovin' this here song \nNow you're amazed by the VIP posse. \n\nSteppin' so hard like a German Nazi \nStartled by the bases hittin' ground \nThere's no trippin' on mine, I'm just gettin' down \nSparkamatic, I'm hangin' tight like a fanatic \nYou trapped me once and I thought that \nYou might have it \nSo step down and lend me your ear \n'89 in my time! You, '90 is my year. \n\nYou're weakenin' fast, YO! and I can tell it \nYour body's gettin' hot, so, so I can smell it \nSo don't be mad and don't be sad \n'Cause the lyrics belong to ICE, You can call me Dad \nYou're pitchin' a fit, so step back and endure \nLet the witch doctor, Ice, do the dance to cure \nSo come up close and don't be square \nYou wanna battle me -- Anytime, anywhere \n\nYou thought that I was weak, Boy, you're dead wrong \nSo come on, everybody and sing this song \n\nSay -- Play that funky music Say, go white boy, go white boy go \nplay that funky music Go white boy, go white boy, go \nLay down and boogie and play that funky music till you die. \n\nPlay that funky music Come on, Come on, let me hear \nPlay that funky music white boy you say it, say it \nPlay that funky music A little louder now \nPlay that funky music, white boy Come on, Come on, Come on \nPlay that funky music \n");
         }
 
         [Fact]
