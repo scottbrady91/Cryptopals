@@ -42,20 +42,41 @@ namespace Cryptopals
             return distance;
         }
 
-        public static List<List<T>> Chunk<T>(this IEnumerable<T> source, int size)
+        public static T[][] CreateMatrix<T>(this IEnumerable<T> source, int size)
         {
             var taken = 0;
-            var chunks = new List<List<T>>();
-            var enumeratedSource = source.ToList();
+            var output = new List<T[]>();
+            var enumeratedSource = source.ToArray();
 
-            while (taken < enumeratedSource.Count)
+            while (taken < enumeratedSource.Length)
             {
-                chunks.Add(enumeratedSource.Skip(taken).Take(size).ToList());
+                output.Add(enumeratedSource.Skip(taken).Take(size).ToArray());
                 taken += size;
             }
 
-            return chunks;
-        } 
+            return output.ToArray();
+        }
+
+        public static T[][] Transpose<T>(this T[][] source)
+        {
+            var transposedBlocks = new List<List<T>>();
+
+            for (var i = 0; i <= source.Length; i++)
+            {
+                foreach (var block in source.ToList())
+                {
+                    if (i < block.Length)
+                    {
+                        if (transposedBlocks.ElementAtOrDefault(i) == null)
+                            transposedBlocks.Add(new List<T>());
+
+                        transposedBlocks[i].Add(block[i]);
+                    }
+                }
+            }
+
+            return transposedBlocks.Select(x => x.ToArray()).ToArray();
+        }
 
         public static byte[,] ToBlock(this byte[] bytes)
         {

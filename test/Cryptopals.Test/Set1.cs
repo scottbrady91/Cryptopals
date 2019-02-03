@@ -114,18 +114,18 @@ namespace Cryptopals.Test
             var keySizeResults = new Dictionary<int, int>();
 
             // 1. "Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40."
-            for (var i = 2; i <= 40; i++)
+            for (var keySize = 2; keySize <= 40; keySize++)
             {
                 // 2. For hamming distance tests see Funcationlity\StringExtensionTests.cs
                 // 3. "For each KEYSIZE, take the first KEYSIZE worth of bytes, and the second KEYSIZE worth of bytes, and find the edit distance between them.
                 // Normalize this result by dividing by KEYSIZE."
-                var firstKeySizeBytes = cipherText.Take(i);
-                var secondKeySizeBytes = cipherText.Skip(i).Take(i);
+                var firstKeySizeBytes = cipherText.Take(keySize);
+                var secondKeySizeBytes = cipherText.Skip(keySize).Take(keySize);
 
                 var hammingDistance = firstKeySizeBytes.GetHammingDistance(secondKeySizeBytes);
-                var normalizedDistance = hammingDistance / i;
+                var normalizedDistance = hammingDistance / keySize; // currently just using the first couple of blocks, maybe check the rest for a better average?
 
-                keySizeResults.Add(i, normalizedDistance);
+                keySizeResults.Add(keySize, normalizedDistance);
             }
 
             // 4. "The KEYSIZE with the smallest normalized edit distance is probably the key.
@@ -136,29 +136,15 @@ namespace Cryptopals.Test
             foreach ((int keySize, int _) in orderedResults)
             {
                 // 5. "Now that you probably know the KEYSIZE: break the ciphertext into blocks of KEYSIZE length."
-                var blocksOfKeySize = cipherText.Chunk(keySize).ToList();
+                var blocksOfKeySize = cipherText.CreateMatrix(keySize);
 
                 // 6. "Now transpose the blocks: make a block that is the first byte of every block,
                 // and a block that is the second byte of every block, and so on."
-                var transposedBlocks = new List<List<byte>>();
+                var transposedBlocks = blocksOfKeySize.Transpose();
 
-                for (var i = 0; i < blocksOfKeySize.Count; i++) // there must be a simpler way but I'm failing to see it...
-                {
-                    foreach (var block in blocksOfKeySize.ToList())
-                    {
-                        if (i < block.Count)
-                        {
-                            if (transposedBlocks.ElementAtOrDefault(i) == null)
-                                transposedBlocks.Add(new List<byte>());
-
-                            transposedBlocks[i].Add(block[i]);
-                        }
-                    }
-                }
-                
                 // 7. "Solve each block as if it was single-character XOR. You already have code to do this."
                 var bruteForceResults = transposedBlocks
-                    .Select(x => Xor.BruteForceSingleByte(Hex.BytesToString(x.ToArray())))
+                    .Select(x => Xor.BruteForceSingleByte(Hex.BytesToString(x)))
                     .ToList();
 
                 // 8. "For each block, the single-byte XOR key that produces the best looking histogram is the repeating-key
@@ -185,6 +171,8 @@ namespace Cryptopals.Test
 
                     fullKey += key;
                 }
+
+                var parsedKey = Encoding.ASCII.GetString(Hex.StringToBytes(fullKey));
 
                 var expandedKey = Xor.ExpandKey(Hex.BytesToString(cipherText), fullKey);
                 var bytes = Xor.ByteArrays(cipherText, Hex.StringToBytes(expandedKey));

@@ -26,29 +26,61 @@ namespace Cryptopals.Test.Functionality
         }
 
         [Fact]
-        public void Chunk_WhenArrayDivisibleByKeySize_ExpectCorrectBlocks()
+        public void CreateMatrix_WhenArrayDivisibleByKeySize_ExpectCorrectBlocks()
         {
             var first = new byte[] {01, 02, 03};
             var second = new byte[] {04, 05, 06};
             var all = first.Concat(second);
 
-            var blocks = all.Chunk(3);
+            var blocks = all.CreateMatrix(3);
 
             blocks[0].Should().BeEquivalentTo(first);
             blocks[1].Should().BeEquivalentTo(second);
         }
 
         [Fact]
-        public void Chunk_WhenArrayNotDivisibleByKeySize_ExpectCorrectBlocks()
+        public void CreateMatrix_WhenArrayNotDivisibleByKeySize_ExpectCorrectBlocks()
         {
             var first = new byte[] {01, 02, 03};
             var second = new byte[] {04};
             var all = first.Concat(second);
 
-            var blocks = all.Chunk(3);
+            var blocks = all.CreateMatrix(3);
 
             blocks[0].Should().BeEquivalentTo(first);
             blocks[1].Should().BeEquivalentTo(second);
+        }
+
+        [Fact]
+        public void Transpose_WhenArrayDivisibleByKeySize_ExpectCorrectBlocks()
+        {
+            var input = new byte[][]
+            {
+                new byte[] {01, 02, 03},
+                new byte[] {04, 05, 06}
+            };
+
+            var transposedBlocks = input.Transpose();
+
+            transposedBlocks[0].Should().BeEquivalentTo(new byte[] {01, 04});
+            transposedBlocks[1].Should().BeEquivalentTo(new byte[] {02, 05});
+            transposedBlocks[2].Should().BeEquivalentTo(new byte[] {03, 06});
+        }
+
+        [Fact]
+        public void Transpose_WhenArrayNotDivisibleByKeySize_ExpectCorrectBlocks()
+        {
+            var input = new byte[][]
+            {
+                new byte[] {01, 02, 03},
+                new byte[] {04},
+            };
+
+            var transposedBlocks = input.Transpose();
+
+            transposedBlocks[0].Should().BeEquivalentTo(new byte[] {01, 04});
+            transposedBlocks[1].Should().BeEquivalentTo(new byte[] {02});
+            transposedBlocks[2].Should().BeEquivalentTo(new byte[] {03});
         }
 
         [Fact]
