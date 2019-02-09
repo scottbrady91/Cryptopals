@@ -4,7 +4,7 @@ using Xunit;
 namespace Cryptopals.Test.Functionality
 {
     // https://en.wikipedia.org/wiki/Base64
-    
+    // https://www.joelonsoftware.com/2003/10/08/the-absolute-minimum-every-software-developer-absolutely-positively-must-know-about-unicode-and-character-sets-no-excuses/
     public class Base64Tests
     {
         [Fact]

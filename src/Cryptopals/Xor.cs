@@ -22,7 +22,7 @@ namespace Cryptopals
         public static byte[] ByteArrays(byte[] x, byte[] y)
         {
             var xorData = new byte[x.Length];
-
+            
             for (var i = 0; i < x.Length; i++)
                 xorData[i] = Bytes(x[i], y[i]);
             

@@ -5,7 +5,6 @@ using System.Text;
 
 namespace Cryptopals
 {
-
     // ASCII to "radix-64" representation
     // each digit is 6 bytes of data (therefore 3 bytes (24 bytes) == 4 digit Base64 string)
     // e.g. Man -> ASCI: 77, 97, 110 -> Binary (octet): 01001101, 01100001, 01101110 -> Binary (sextet): 19, 22, 5, 46 -> Base64: TWFu
