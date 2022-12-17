@@ -12,7 +12,7 @@ public class Set2
         const string block = "YELLOW SUBMARINE";
         const string expectedPaddedBlock = "YELLOW SUBMARINE\x04\x04\x04\x04"; // padded to 20 bytes
 
-        var paddedBytes = PKCS7.Pad(Encoding.ASCII.GetBytes(block), 20);
+        var paddedBytes = Pkcs7.Pad(Encoding.ASCII.GetBytes(block), 20);
 
         Encoding.ASCII.GetString(paddedBytes).Should().Be(expectedPaddedBlock);
     } 

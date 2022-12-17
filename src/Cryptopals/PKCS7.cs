@@ -3,7 +3,7 @@
 namespace Cryptopals;
 
 // ReSharper disable once InconsistentNaming
-public static class PKCS7
+public static class Pkcs7
 {
     public const char PaddingCharacter = '\x04';
     

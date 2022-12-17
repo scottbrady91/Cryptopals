@@ -12,7 +12,7 @@ public class PKCS7Tests
         var data = new byte[16];
         RandomNumberGenerator.Fill(data);
 
-        var paddedData = PKCS7.Pad(data, data.Length);
+        var paddedData = Pkcs7.Pad(data, data.Length);
 
         paddedData.Should().BeEquivalentTo(data);
     }
@@ -28,13 +28,13 @@ public class PKCS7Tests
         var data = new byte[initialSize];
         RandomNumberGenerator.Fill(data);
 
-        var paddedData = PKCS7.Pad(data, blockSize);
+        var paddedData = Pkcs7.Pad(data, blockSize);
 
         paddedData.Should().StartWith(data);
         paddedData.Length.Should().Be(blockSize);
         for (int i = 1; i <= (blockSize - initialSize); i++)
         {
-            paddedData[^i].Should().Be((byte) PKCS7.PaddingCharacter);
+            paddedData[^i].Should().Be((byte) Pkcs7.PaddingCharacter);
         }
     }
 }
