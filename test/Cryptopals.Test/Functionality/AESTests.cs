@@ -54,6 +54,8 @@ namespace Cryptopals.Test.Functionality
 
             var ciphertextCustom = new AES().Encrypt(plaintext, key);
             var ciphertextNet = SystemCryptographyEncrypt(plaintext, key);
+
+            ciphertextCustom.Should().Be(ciphertextNet);
         }
 
         [Fact]
@@ -64,11 +66,10 @@ namespace Cryptopals.Test.Functionality
 
             var challengePlainText = SystemCryptographyDecrypt(challengeText, key);
 
-
-            challengePlainText.Should().NotBeNull();
+            challengePlainText.Should().Contain("Play that funky music");
         }
 
-        private string SystemCryptographyEncrypt(string plaintext, string key)
+        private static string SystemCryptographyEncrypt(string plaintext, string key)
         {
             var aes = Aes.Create();
             aes.Key = Encoding.ASCII.GetBytes(key);
@@ -90,7 +91,7 @@ namespace Cryptopals.Test.Functionality
             }
         }
 
-        private string SystemCryptographyDecrypt(string ciphertext, string key)
+        private static string SystemCryptographyDecrypt(string ciphertext, string key)
         {
             var aes = Aes.Create();
             aes.Key = Encoding.ASCII.GetBytes(key);
