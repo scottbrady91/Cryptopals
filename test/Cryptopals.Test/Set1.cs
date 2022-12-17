@@ -1,9 +1,12 @@
+using System;
 using FluentAssertions;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using Xunit;
+using Aes = System.Security.Cryptography.Aes;
 
 namespace Cryptopals.Test
 {
@@ -189,41 +192,36 @@ namespace Cryptopals.Test
         [Fact]
         public void Challenge7() // AES in ECB mode (AES-128-ECB)
         {
-            var key = "YELLOW SUBMARINE";
+            const string key = "YELLOW SUBMARINE";
+            string challengeCiphertext = File.ReadAllText("TestData/Set1/7.txt");
 
-            // text must be processed in blocks
-            // (usually 64 (2^6) or 128 (2^7) bits - a compromise between ciphertext length and memory footprint)
-            // 128 or longer preferred due to being more efficient on modern CPUs & more secure (longer cipher text?)
-            // encryption is performed in rounds (repeated steps) and should use a different key per round
+            // using System.Security.Cryptography implementation to skip implementing AES myself...
+            var aes = Aes.Create();
+            aes.Key = Encoding.ASCII.GetBytes(key);
+            var challengePlaintext = aes.DecryptEcb(Convert.FromBase64String(challengeCiphertext), PaddingMode.None);
 
-            // AES: blocks of 128 bits, key of 128, 192, or 256 bits (128 most common, difference between 128 & 256 is unnecessary for most applicationss)
-            // manipulates 16 bytes as a two dimensional array of bytes
-            // performs rounds of SPN (10 for 128-bit keys, 12 for 192, 14 for 256)
+            challengePlaintext.Should().Contain(Encoding.ASCII.GetBytes("I'm back and I'm ringin' the bell \nA rockin' on the mike while the fly girls yell \nIn ecstasy in the back of me \nWell that's my DJ Deshay cuttin' all them Z's \nHittin' hard and the girlies goin' crazy \nVanilla's on the mike, man I'm not lazy. \n\nI'm lettin' my drug kick in \nIt controls my mouth and I begin \nTo just let it flow, let my concepts go \nMy posse's to the side yellin', Go Vanilla Go! \n\nSmooth 'cause that's the way I will be \nAnd if you don't give a damn, then \nWhy you starin' at me \nSo get off 'cause I control the stage \nThere's no dissin' allowed \nI'm in my own phase \nThe girlies sa y they love me and that is ok \nAnd I can dance better than any kid n' play \n\nStage 2 -- Yea the one ya' wanna listen to \nIt's off my head so let the beat play through \nSo I can funk it up and make it sound good \n1-2-3 Yo -- Knock on some wood \nFor good luck, I like my rhymes atrocious \nSupercalafragilisticexpialidocious \nI'm an effect and that you can bet \nI can take a fly girl and make her wet. \n\nI'm like Samson -- Samson to Delilah \nThere's no denyin', You can try to hang \nBut you'll keep tryin' to get my style \nOver and over, practice makes perfect \nBut not if you're a loafer. \n\nYou'll get nowhere, no place, no time, no girls \nSoon -- Oh my God, homebody, you probably eat \nSpaghetti with a spoon! Come on and say it! \n\nVIP. Vanilla Ice yep, yep, I'm comin' hard like a rhino \nIntoxicating so you stagger like a wino \nSo punks stop trying and girl stop cryin' \nVanilla Ice is sellin' and you people are buyin' \n'Cause why the freaks are jockin' like Crazy Glue \nMovin' and groovin' trying to sing along \nAll through the ghetto groovin' this here song \nNow you're amazed by the VIP posse. \n\nSteppin' so hard like a German Nazi \nStartled by the bases hittin' ground \nThere's no trippin' on mine, I'm just gettin' down \nSparkamatic, I'm hangin' tight like a fanatic \nYou trapped me once and I thought that \nYou might have it \nSo step down and lend me your ear \n'89 in my time! You, '90 is my year. \n\nYou're weakenin' fast, YO! and I can tell it \nYour body's gettin' hot, so, so I can smell it \nSo don't be mad and don't be sad \n'Cause the lyrics belong to ICE, You can call me Dad \nYou're pitchin' a fit, so step back and endure \nLet the witch doctor, Ice, do the dance to cure \nSo come up close and don't be square \nYou wanna battle me -- Anytime, anywhere \n\nYou thought that I was weak, Boy, you're dead wrong \nSo come on, everybody and sing this song \n\nSay -- Play that funky music Say, go white boy, go white boy go \nplay that funky music Go white boy, go white boy, go \nLay down and boogie and play that funky music till you die. \n\nPlay that funky music Come on, Come on, let me hear \nPlay that funky music white boy you say it, say it \nPlay that funky music A little louder now \nPlay that funky music, white boy Come on, Come on, Come on \nPlay that funky music \n"));
+        }
 
-            // ECB (Electronic Codebook) mode processes each block independently
-            // Simple but insecure - DO NOT USE - you will get identical blocks
+        [Fact]
+        public void Challenge8() // detect ECB
+        {
+            var ciphertextsAsHex = File.ReadAllLines("TestData/Set1/8.txt").ToList();
+            string suspectedEcbCiphertext = null;
 
-            // 1. Key Expansion (derive round keys from cipher key using Rijndael's key schedule)
-            
+            // "Remember that the problem with ECB is that it is stateless and deterministic; the same 16 byte plaintext block will always produce the same 16 byte ciphertext."
+            foreach (var ciphertextHex in ciphertextsAsHex)
+            {
+                var hashset = new HashSet<string>();
+                var blocks = ciphertextHex.Chunk(32).Select(x => new string(x)).ToList();
 
-            // 2. AddRoundKey: "XORs a round key to the internal state"
+                if (blocks.Any(block => !hashset.Add(block)))
+                {
+                    suspectedEcbCiphertext = ciphertextHex;
+                }
+            }
 
-            // 3. REPEAT Rounds
-            
-                // 1. SubBytes: "Replaces each bytes with another byte according to an S-box" - Substitution
-
-                // 2. ShiftRows: "Shifts the i-th row of i positions, for i ranging from 0 to 3" - Permutation
-
-                // 3. MixColumns: "Applies the same linear transformation to each of the 4 columns of the state"  - Permutation
-
-                // 4. AddRoundKey
-
-            // 4. Final round
-                // 1. SubBytes
-                // 2. ShiftRows
-                // 3. AddRoundKey
-
-            Assert.False(true); // TODO
+            suspectedEcbCiphertext.Should().Be("d880619740a8a19b7840a8a31c810a3d08649af70dc06f4fd5d2d69c744cd283e2dd052f6b641dbf9d11b0348542bb5708649af70dc06f4fd5d2d69c744cd2839475c9dfdbc1d46597949d9c7e82bf5a08649af70dc06f4fd5d2d69c744cd28397a93eab8d6aecd566489154789a6b0308649af70dc06f4fd5d2d69c744cd283d403180c98c8f6db1f2a3f9c4040deb0ab51b29933f2c123c58386b06fba186a");
         }
     }
 }

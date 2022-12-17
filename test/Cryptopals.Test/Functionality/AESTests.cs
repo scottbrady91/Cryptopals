@@ -7,6 +7,7 @@ using Xunit;
 
 namespace Cryptopals.Test.Functionality
 {
+    // ReSharper disable once InconsistentNaming
     public class AESTests
     {
         [Fact]
@@ -44,18 +45,6 @@ namespace Cryptopals.Test.Functionality
             var decryptedPlaintext = SystemCryptographyDecrypt(ciphertext, key);
 
             decryptedPlaintext.Should().Be(decryptedPlaintext);
-        }
-
-        [Fact]
-        public void ConfirmCustomIsSameAsSystemCryptography()
-        {
-            const string key = "YELLOW SUBMARINE";
-            const string plaintext = "12345678901234561234567890123456";
-
-            var ciphertextCustom = new AES().Encrypt(plaintext, key);
-            var ciphertextNet = SystemCryptographyEncrypt(plaintext, key);
-
-            ciphertextCustom.Should().Be(ciphertextNet);
         }
 
         [Fact]

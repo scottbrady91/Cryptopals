@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace Cryptopals
 {
     // ReSharper disable once InconsistentNaming
+    /// <summary>
+    /// Abandoned attempt (2019) of a custom implementation of AES.
+    /// I made some progress, but abandoning in favor of out-of-the-box implementation and to move forward with the rest of the callenges.
+    /// </summary>
     public class AES
     {
         public string Encrypt(string plaintext, string key)
