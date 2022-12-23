@@ -1,10 +1,11 @@
-﻿using System.Security.Cryptography;
+﻿using System;
+using System.Security.Cryptography;
 using FluentAssertions;
 using Xunit;
 
 namespace Cryptopals.Test.Functionality;
 
-public class PKCS7Tests
+public class Pkcs7Tests
 {
     [Fact]
     public void Pad_WhenAlreadyCorrectBlockSize_ExpectNoChange()
@@ -14,7 +15,7 @@ public class PKCS7Tests
 
         var paddedData = Pkcs7.Pad(data, data.Length);
 
-        paddedData.Should().BeEquivalentTo(data);
+        paddedData.SequenceEqual(data).Should().BeTrue();
     }
 
     [Theory]
@@ -28,13 +29,27 @@ public class PKCS7Tests
         var data = new byte[initialSize];
         RandomNumberGenerator.Fill(data);
 
-        var paddedData = Pkcs7.Pad(data, blockSize);
+        var paddedData = Pkcs7.Pad(data, blockSize).ToArray();
 
         paddedData.Should().StartWith(data);
         paddedData.Length.Should().Be(blockSize);
         for (int i = 1; i <= (blockSize - initialSize); i++)
         {
-            paddedData[^i].Should().Be((byte) Pkcs7.PaddingCharacter);
+            paddedData[^i].Should().Be(Pkcs7.PaddingCharacter);
         }
     }
+    
+    [Fact]
+    public void Unpad_WhenDataContainsNoPaddingCharacters_ExpectNoChange()
+    {
+        var data = new byte[16];
+        RandomNumberGenerator.Fill(data);
+        data[^1] = 1;
+
+        var paddedData = Pkcs7.Unpad(data);
+
+        paddedData.SequenceEqual(data).Should().BeTrue();
+    }
+    
+    // TODO: unpad tests
 }

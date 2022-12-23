@@ -19,7 +19,7 @@ namespace Cryptopals
             return Hex.BytesToString(xorData);
         }
 
-        public static byte[] ByteArrays(byte[] x, byte[] y)
+        public static byte[] ByteArrays(Span<byte> x, Span<byte> y)
         {
             var xorData = new byte[x.Length];
             

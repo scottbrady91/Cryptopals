@@ -5,24 +5,28 @@ namespace Cryptopals;
 // ReSharper disable once InconsistentNaming
 public static class Pkcs7
 {
-    public const char PaddingCharacter = '\x04';
+    public const byte PaddingCharacter = 4;
     
-    /// <summary>
-    /// 🤢
-    /// </summary>
-    public static byte[] Pad(byte[] data, int blockSize)
+    public static Span<byte> Pad(Span<byte> data, int blockSize)
     {
         var mod = blockSize % data.Length;
         if (mod == 0) return data;
 
         var paddedBytes = new byte[data.Length + mod];
-        Array.Copy(data, paddedBytes, data.Length);
-
+        data.CopyTo(paddedBytes);
+        
         for (var i = 1; i <= mod; i++)
         {
-            paddedBytes[^i] = (byte) PaddingCharacter;
+            paddedBytes[^i] = PaddingCharacter;
         }
 
         return paddedBytes;
     }
+
+    public static Span<byte> Unpad(Span<byte> data)
+    {
+        if (data[^1] != PaddingCharacter) return data;
+        
+        return data.Trim(PaddingCharacter);
+    } 
 }
