@@ -26,6 +26,22 @@ public class AesCustomTests
     }
     
     [Fact]
+    public void ECB_WhenPaddingRequired_EncryptAndDecrypt()
+    {
+        var key = new byte[16];
+        RandomNumberGenerator.Fill(key);
+        
+        var plaintext = new byte[2];
+        RandomNumberGenerator.Fill(plaintext);
+
+        var aes = AesCustom.Create(key);
+        var ciphertext = aes.EncryptEcb(plaintext);
+        var decryptedPlaintext = aes.DecryptEcb(ciphertext);
+
+        decryptedPlaintext.SequenceEqual(plaintext).Should().BeTrue();
+    }
+    
+    [Fact]
     public void DecryptCbc_ExpectAbleToDecryptSystemSecurityCryptographyAes()
     {
         var key = Encoding.ASCII.GetBytes("YELLOW SUBMARINE");

@@ -16,7 +16,6 @@ public class AesCustom
     {
         var aes = Aes.Create();
         aes.Key = key;  // symmetric key
-        aes.Padding = PaddingMode.None; // we're handling padding ourselves
         aes.BlockSize = BlockSize * 8; // block size in bits
 
         return new AesCustom { aes = aes };
@@ -25,7 +24,7 @@ public class AesCustom
     /// <summary>
     /// https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Cipher_block_chaining_(CBC)
     /// </summary>
-    public IEnumerable<byte> EncryptCbc(Span<byte> plaintext, Span<byte> iv)
+    public byte[] EncryptCbc(Span<byte> plaintext, Span<byte> iv)
     {
         var ciphertext = new List<byte>();
         for (var i = 0; i < plaintext.Length / BlockSize; i++)
@@ -44,17 +43,15 @@ public class AesCustom
                 cbcIv = ciphertext.Skip((i - 1) * BlockSize).Take(BlockSize).ToArray();
             }
 
-            // if (blockToEncrypt.Length != BlockSize) blockToEncrypt = Pkcs7.Pad(blockToEncrypt.ToArray(), BlockSize);
-
             // XOR then encrypt
             var bytesToEncrypt = Xor.ByteArrays(blockToEncrypt, cbcIv);
             ciphertext.AddRange(EncryptEcb(bytesToEncrypt).ToArray());
         }
         
-        return ciphertext;
+        return ciphertext.ToArray();
     }
     
-    public IEnumerable<byte> DecryptCbc(Span<byte> ciphertext, Span<byte> iv)
+    public byte[] DecryptCbc(Span<byte> ciphertext, Span<byte> iv)
     {
         var plaintext = new List<byte>();
         for (var i = 0; i < ciphertext.Length / BlockSize; i++)
@@ -78,7 +75,7 @@ public class AesCustom
             plaintext.AddRange(Xor.ByteArrays(decryptedBytes, cbcIv));
         }
 
-        return Pkcs7.Unpad(plaintext.ToArray()).ToArray(); // TODO: cleanup
+        return Pkcs7.Unpad(plaintext.ToArray()).ToArray(); // ☹️
     }
 
     public Span<byte> EncryptEcb(Span<byte> plaintext)
@@ -90,5 +87,24 @@ public class AesCustom
     {
         var plaintext = aes.DecryptEcb(ciphertext, PaddingMode.None);
         return Pkcs7.Unpad(plaintext);
+    }
+
+    public static bool DetectEcb(Func<byte[], byte[]> oracle)
+    {
+        var ciphertext = oracle(new byte[128]);
+        
+        var seenBlocks = new List<IEnumerable<byte>>();
+        for (var i = 0; i < ciphertext.Length / 16; i++)
+        {
+            var block = ciphertext.Skip(i * 16).Take(16);
+            if (seenBlocks.Any(x => x.SequenceEqual(block)))
+            {
+                return true;
+            }
+
+            seenBlocks.Add(block);
+        }
+
+        return false;
     }
 }

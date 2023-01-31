@@ -204,7 +204,7 @@ namespace Cryptopals.Test
         [Fact]
         public void Challenge8() // detect ECB
         {
-            var ciphertextsAsHex = File.ReadAllLines("TestData/Set1/8.txt").ToList();
+            List<string> ciphertextsAsHex = File.ReadAllLines("TestData/Set1/8.txt").ToList();
             string suspectedEcbCiphertext = null;
 
             // "Remember that the problem with ECB is that it is stateless and deterministic; the same 16 byte plaintext block will always produce the same 16 byte ciphertext."
