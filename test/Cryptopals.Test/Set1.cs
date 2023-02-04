@@ -11,7 +11,7 @@ namespace Cryptopals.Test
     public class Set1
     {
         [Fact]
-        public void Challenge1() // base64
+        public void Challenge01() // base64
         {
             const string hex = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
             const string expected = "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t";
@@ -20,7 +20,7 @@ namespace Cryptopals.Test
         }
 
         [Fact]
-        public void Challenge2() // XOR
+        public void Challenge02() // XOR
         {
             const string hex1 = "1c0111001f010100061a024b53535009181c";
             const string hex2 = "686974207468652062756c6c277320657965";
@@ -30,7 +30,7 @@ namespace Cryptopals.Test
         }
 
         [Fact]
-        public void Challenge3() // single-byte XOR brute force
+        public void Challenge03() // single-byte XOR brute force
         {
             const string cipherText = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
 
@@ -56,7 +56,7 @@ namespace Cryptopals.Test
         }
 
         [Fact]
-        public void Challenge4() // find single-byte XOR ciphertext & brute force
+        public void Challenge04() // find single-byte XOR ciphertext & brute force
         {
             var cipherTexts = File.ReadAllLines("TestData/Set1/4.txt");
 
@@ -85,7 +85,7 @@ namespace Cryptopals.Test
         }
 
         [Fact]
-        public void Challenge5() // repeating-key XOR 
+        public void Challenge05() // repeating-key XOR 
         {
             const string plaintext = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
             const string key = "ICE";
@@ -105,7 +105,7 @@ namespace Cryptopals.Test
         }
 
         [Fact]
-        public void Challenge6() // Break repeating-key XOR
+        public void Challenge06() // Break repeating-key XOR
         {
             var encodedCipherText = File.ReadAllLines("TestData/Set1/6.txt")
                 .Aggregate(string.Empty, (s, s1) => s + s1);
@@ -188,7 +188,7 @@ namespace Cryptopals.Test
         }
 
         [Fact]
-        public void Challenge7() // AES in ECB mode (AES-128-ECB)
+        public void Challenge07() // AES in ECB mode (AES-128-ECB)
         {
             const string key = "YELLOW SUBMARINE";
             string challengeCiphertext = File.ReadAllText("TestData/Set1/7.txt");
@@ -202,7 +202,7 @@ namespace Cryptopals.Test
         }
 
         [Fact]
-        public void Challenge8() // detect ECB
+        public void Challenge08() // detect ECB
         {
             List<string> ciphertextsAsHex = File.ReadAllLines("TestData/Set1/8.txt").ToList();
             string suspectedEcbCiphertext = null;

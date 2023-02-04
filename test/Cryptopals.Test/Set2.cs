@@ -20,7 +20,7 @@ public class Set2
     }
 
     [Fact]
-    public void Challenge9() // Implement PKCS#7 padding
+    public void Challenge09() // Implement PKCS#7 padding
     {
         const string block = "YELLOW SUBMARINE";
         const string expectedPaddedBlock = "YELLOW SUBMARINE\x04\x04\x04\x04"; // padded to 20 bytes
@@ -76,46 +76,10 @@ public class Set2
 
         // brute force
         var plaintext = new List<byte>();
-        //plaintext.AddRange(BruteForceBlock(x => EcbEncryptionOracle(x).ToArray(), Array.Empty<byte>(), blockSize, 1));
-
-        // Span<byte> bruteForceBytes = new byte[blockSize];
-        // for (int j = 0; j < blockSize; j++)
-        // {
-        //     // isolate a byte of the unknown value
-        //     var blockWithIsolatedByte = EcbEncryptionOracle(new byte[blockSize - (j + 1)]).Slice(0, 16);
-        //     
-        //     for (var i = 0; i < 256; i++)
-        //     {
-        //         bruteForceBytes[^1] = (byte)i;
-        //         var bruteForcedCiphertext = EcbEncryptionOracle(bruteForceBytes.ToArray()).Slice(0, 16);
-        //
-        //         if (bruteForcedCiphertext.SequenceEqual(blockWithIsolatedByte.ToArray()))
-        //         {
-        //             if (j == blockSize - 1)
-        //             {
-        //                 Array.Copy(bruteForceBytes.ToArray(), 0, plaintext, 0, bruteForceBytes.Length);
-        //             }
-        //             else
-        //             {
-        //                 var temp = new byte[blockSize];
-        //                 Array.Copy(bruteForceBytes.ToArray(), 1, temp, 0, bruteForceBytes.Length - 1);
-        //                 bruteForceBytes = temp;
-        //             }
-        //             
-        //             
-        //             break;
-        //         }
-        //     }
-        // }
         
         Span<byte> unknownValue = Base64.DecodeBytes("Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK");
-        /*unknownValue.Slice(0, blockSize).SequenceEqual(plaintext.ToArray()).Should().BeTrue();
         
-        plaintext.AddRange(BruteForceBlock(x => EcbEncryptionOracle(x).ToArray(), plaintext.ToArray(), blockSize, 2));
-        unknownValue.Slice(0, blockSize * 2).SequenceEqual(plaintext.ToArray()).Should().BeTrue();*/
-
-
-        for (int i = 0; i < ciphertextLength / blockSize; i++)
+        for (var i = 0; i < ciphertextLength / blockSize; i++)
         {
             plaintext.AddRange(BruteForceBlock(x => EcbEncryptionOracle(x).ToArray(), plaintext.ToArray(), blockSize, i + 1));
         }
@@ -123,37 +87,35 @@ public class Set2
         unknownValue.SequenceEqual(plaintext.ToArray());
     }
 
-    
-    /// <summary>
-    /// Currently brute forces first block only
-    /// </summary>
-    private byte[] BruteForceBlock(Func<byte[], byte[]> oracle, byte[] knownBytes, int blockSize, int blockNumber)
+    private static byte[] BruteForceBlock(Func<byte[], byte[]> oracle, byte[] knownBytes, int blockSize, int blockNumber)
     {
         if (knownBytes.Length % blockSize != 0) throw new Exception("Known bytes must be in correct block sizes");
         
-        List<byte> bruteForcedBytes = new List<byte>();
+        var bruteForcedBytes = new List<byte>();
         
         for (var blockPosition = 0; blockPosition < blockSize; blockPosition++)
         {
             // isolate a byte of the unknown value (a ciphertext where only the last byte of the first block is unknown to us)
-            byte[] blockWithIsolatedByte;
-            blockWithIsolatedByte = oracle(new byte[blockSize - (blockPosition + 1)]).Take(blockSize * blockNumber).ToArray();
-            
-            // brute force the isolated byte
-            byte[] bfb = new byte[blockSize * blockNumber];
-            if (knownBytes.Any()) Array.Copy(knownBytes, 0, bfb, blockSize - blockPosition - 1, knownBytes.Length);
-            Array.Copy(bruteForcedBytes.ToArray(), 0, bfb, blockSize - blockPosition + knownBytes.Length - 1, bruteForcedBytes.Count);
-            
+            // this will place the first byte of the block you want to brute force at the end of that block
+            // optimization: remember each ciphertext (they can be reused for each block) 
+            var blockWithIsolatedByte = oracle(new byte[blockSize - (blockPosition + 1)]).Take(blockSize * blockNumber).ToArray();
+
+            // brute force the isolated byte (any known bytes, prepended with zeros, with the final byte starting at 0)
+            byte[] plaintext = new byte[blockSize * blockNumber];
+            if (knownBytes.Any()) Array.Copy(knownBytes, 0, plaintext, blockSize - blockPosition - 1, knownBytes.Length);
+            Array.Copy(bruteForcedBytes.ToArray(), 0, plaintext, blockSize - blockPosition + knownBytes.Length - 1, bruteForcedBytes.Count);
             
             for (var i = 0; i < 256; i++)
             {
-                bfb[^1] = (byte)i;
-                var bruteForcedCiphertext = oracle(bfb.ToArray()).Take(blockSize * blockNumber);
+                plaintext[^1] = (byte)i;
+                var bruteForcedCiphertext = oracle(plaintext).Take(blockSize * blockNumber);
 
                 if (bruteForcedCiphertext.SequenceEqual(blockWithIsolatedByte))
                 {
+                    // add to known plaintext
                     bruteForcedBytes.Add((byte)i);
                     
+                    // or unpad and return decrypted block
                     if (blockPosition == (blockSize) - 1)
                     {
                         return Pkcs7.Unpad(bruteForcedBytes.ToArray()).ToArray();
@@ -174,6 +136,7 @@ public class Set2
         return key;
     }
 
+    // Challenge 11 encryption oracle
     private static Span<byte> EncryptionOracle(byte[] plaintext)
     {
         var key = GenerateKey(16);
@@ -198,6 +161,8 @@ public class Set2
     }
 
     private static readonly byte[] EcbEncryptionOracleKey = GenerateKey(16);
+    
+    // Challenge 12 encryption oracle
     private static Span<byte> EcbEncryptionOracle(byte[] plaintext)
     {
         var aes = AesCustom.Create(EcbEncryptionOracleKey);
