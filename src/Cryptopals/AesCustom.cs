@@ -7,18 +7,18 @@ namespace Cryptopals;
 
 public class AesCustom
 {
-    private const int BlockSize = 16;
+    private int blockSize;
     private Aes aes;
     
     private AesCustom() { }
     
-    public static AesCustom Create(byte[] key)
+    public static AesCustom Create(byte[] key, int blockSize = 16)
     {
         var aes = Aes.Create();
         aes.Key = key;  // symmetric key
-        aes.BlockSize = BlockSize * 8; // block size in bits
+        aes.BlockSize = blockSize * 8; // block size in bits
 
-        return new AesCustom { aes = aes };
+        return new AesCustom { aes = aes, blockSize = blockSize };
     }
     
     /// <summary>
@@ -27,25 +27,23 @@ public class AesCustom
     public byte[] EncryptCbc(Span<byte> plaintext, Span<byte> iv)
     {
         var ciphertext = new List<byte>();
-        for (var i = 0; i < plaintext.Length / BlockSize; i++)
+        byte[] previousEncryptedBlock = null;
+        for (var i = 0; i < plaintext.Length / blockSize; i++)
         {
-            var blockToEncrypt = plaintext.Slice(i * BlockSize, BlockSize);
-            Span<byte> cbcIv;
+            var blockToEncrypt = plaintext.Slice(i * blockSize, blockSize);
+            Span<byte> currentIv;
 
-            if (i == 0)
-            {
-                // first block XORed against initialization vector
-                cbcIv = iv;
-            }
-            else
-            {
-                // otherwise XORed against previous ciphertext block
-                cbcIv = ciphertext.Skip((i - 1) * BlockSize).Take(BlockSize).ToArray();
-            }
+            // first block XORed against initialization vector
+            if (i == 0) currentIv = iv;
+            // otherwise XORed against previous ciphertext block
+            else currentIv = previousEncryptedBlock;
 
             // XOR then encrypt
-            var bytesToEncrypt = Xor.ByteArrays(blockToEncrypt, cbcIv);
-            ciphertext.AddRange(EncryptEcb(bytesToEncrypt).ToArray());
+            var bytesToEncrypt = Xor.ByteArrays(blockToEncrypt, currentIv);
+            var encryptedBlock = aes.EncryptEcb(Pkcs7.Pad(bytesToEncrypt, blockSize), PaddingMode.None);
+            
+            ciphertext.AddRange(encryptedBlock);
+            previousEncryptedBlock = encryptedBlock;
         }
         
         return ciphertext.ToArray();
@@ -54,25 +52,28 @@ public class AesCustom
     public byte[] DecryptCbc(Span<byte> ciphertext, Span<byte> iv)
     {
         var plaintext = new List<byte>();
-        for (var i = 0; i < ciphertext.Length / BlockSize; i++)
+        Span<byte> previousEncryptedBlock = null;
+        for (var i = 0; i < ciphertext.Length / blockSize; i++)
         {
-            var blockToDecrypt = ciphertext.Slice(i * BlockSize, BlockSize);
-            Span<byte> cbcIv;
+            var blockToDecrypt = ciphertext.Slice(i * blockSize, blockSize);
+            Span<byte> currentIv;
             
             if (i == 0)
             {
                 // first block XORed against initialization vector
-                cbcIv = iv;
+                currentIv = iv;
             }
             else
             {
                 // otherwise XORed against previous ciphertext block
-                cbcIv = ciphertext.Slice((i - 1) * BlockSize, BlockSize);
+                currentIv = previousEncryptedBlock;
             }
             
             // decrypt and then XOR
             var decryptedBytes = DecryptEcb(blockToDecrypt);
-            plaintext.AddRange(Xor.ByteArrays(decryptedBytes, cbcIv));
+            plaintext.AddRange(Xor.ByteArrays(decryptedBytes, currentIv));
+            
+            previousEncryptedBlock = blockToDecrypt;
         }
 
         return Pkcs7.Unpad(plaintext.ToArray()).ToArray(); // ☹️
@@ -80,7 +81,7 @@ public class AesCustom
 
     public Span<byte> EncryptEcb(Span<byte> plaintext)
     {
-        return aes.EncryptEcb(Pkcs7.Pad(plaintext, BlockSize), PaddingMode.None);
+        return aes.EncryptEcb(Pkcs7.Pad(plaintext, blockSize), PaddingMode.None);
     }
 
     public Span<byte> DecryptEcb(Span<byte> ciphertext)
